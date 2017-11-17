@@ -1,6 +1,6 @@
 # CSC365_Lab7
 
-##Using the JDBC
+## Using the JDBC
 
 Three classes:
 - InnReservations: a driver class that handles user input
