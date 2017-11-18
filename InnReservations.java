@@ -4,7 +4,7 @@
  */
 
 // imports
-
+import java.sql.*;
 
 public class InnReservations {
    /** 
@@ -18,6 +18,19 @@ public class InnReservations {
 
 
       System.out.println("test");
-   
+
+      try {
+         String jdbcUrl = System.getenv("APP_JDBC_URL");
+         String dbUsername = System.getenv("APP_JDBC_USER");
+         String dbPassword = System.getenv("APP_JDBC_PW");
+
+         Connection conn = DriverManager.getConnection(jdbcUrl, dbUsername, dbPassword);
+
+         System.out.println("Connection Established Successful and the DATABASE NAME IS:"
+                 + conn.getMetaData().getDatabaseProductName());
+      }
+      catch (Exception e) {
+         e.printStackTrace();
+      }
    }
 }
