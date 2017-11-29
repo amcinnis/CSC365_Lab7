@@ -5,6 +5,13 @@
 
 // imports
 import java.sql.*;
+import java.sql.DriverManager;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+import java.sql.ResultSet;
 
 public class InnReservations {
    /** 
@@ -13,21 +20,29 @@ public class InnReservations {
     * to build queries
     */
    public static void main(String args[]) {
-
-      DatabaseCommunicator comm = new DatabaseCommunicator();
-
-
-      System.out.println("test");
+      System.out.println("testing...");
 
       try {
          String jdbcUrl = System.getenv("APP_JDBC_URL");
          String dbUsername = System.getenv("APP_JDBC_USER");
          String dbPassword = System.getenv("APP_JDBC_PW");
+         String dbname = System.getenv("APP_JDBC_DBNAME");
 
-         Connection conn = DriverManager.getConnection(jdbcUrl, dbUsername, dbPassword);
+         DatabaseCommunicator comm = new DatabaseCommunicator(jdbcUrl, dbUsername, dbPassword, dbname);
 
-         System.out.println("Connection Established Successful and the DATABASE NAME IS:"
-                 + conn.getMetaData().getDatabaseProductName());
+         List<String> fields = new ArrayList<String>();
+         List<String> values = new ArrayList<String>();
+         
+         fields.add("RoomCode");
+         fields.add("maxOcc");
+         values.add("AWE");
+         values.add("5");
+         
+         Room newRoom = new Room();
+         
+         DatabaseObject dbObj = newRoom;
+         
+         comm.insertDatabase(dbObj, fields, values);
       }
       catch (Exception e) {
          e.printStackTrace();
