@@ -7,8 +7,9 @@ public class Room implements DatabaseObject {
    private int maxOcc; 
    private double basePrice;
    private String decor;
+   private double popularity;
    
-   public Room(String roomCode, String roomName, int beds, String bedType, int maxOcc, double basePrice, String decor) {
+   public Room(String roomCode, String roomName, int beds, String bedType, int maxOcc, double basePrice, String decor, double popularity) {
       super();
       this.roomCode = roomCode;
       this.roomName = roomName;
@@ -17,6 +18,7 @@ public class Room implements DatabaseObject {
       this.maxOcc = maxOcc;
       this.basePrice = basePrice;
       this.decor = decor;
+      this.popularity = popularity;
    }
    
    public Room() {
@@ -76,6 +78,14 @@ public class Room implements DatabaseObject {
 
    public void setDecor(String decor) {
       this.decor = decor;
+   }
+
+   public double getPopularity() {
+      return popularity;
+   }
+
+   public void setPopularity(double popularity) {
+      this.popularity = popularity;
    }
 
    public String getKeys(){

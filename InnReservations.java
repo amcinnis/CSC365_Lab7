@@ -14,6 +14,7 @@ import java.util.List;
 import java.sql.ResultSet;
 import java.util.Scanner;
 
+
 public class InnReservations {
    /** 
     * main driver - handles user commands/ui
@@ -54,35 +55,41 @@ public class InnReservations {
          boolean chosen = false;
 
          while (chosen == false) {
-            System.out.println("Welcome to the Reservation System. Please select from the following options:");
-            System.out.println("Rooms and Rates");
-            System.out.println("Reservations");
-            System.out.println("Detailed Reservation Information");
-            System.out.println("Revenue");
+            System.out.println("Welcome to the Reservation System. Please select a number for the following options:");
+            System.out.println("1. Rooms and Rates");
+            System.out.println("2. Reservations");
+            System.out.println("3. Detailed Reservation Information");
+            System.out.println("4. Revenue");
             System.out.println();
-            System.out.println("Enter selection: ");
+            System.out.print("Select a number: ");
 
             Scanner scanner = new Scanner(System.in);
-            String input = scanner.nextLine().toLowerCase();
+            int input = scanner.nextInt();
             System.out.println();
 
             switch (input) {
-               case "rooms and rates":
+               case 1:
                   chosen = true;
-                  //InnReservations.selectAll(conn);
+                  InnReservations.roomsAndRates(conn);
                   break;
-               case "reservations":
+               case 2:
                   chosen = true;
                   Reservation res = InnReservations.newReservation(conn);
+                  System.out.println();
+                  if (res == null) {
+                     chosen = false;
+                     break;
+                  }
                   break;
-               case "detailed reservation information":
+               case 3:
                   chosen = true;
                   break;
-               case "revenue":
+               case 4:
                   chosen = true;
                   break;
                default:
                   System.out.println("Invalid input - please try again" + '\n');
+                  chosen = false;
             }
          }
       }
@@ -100,6 +107,65 @@ public class InnReservations {
             System.out.println(roomCode);
          }
       }
+      catch (SQLException exception) {
+         exception.printStackTrace();
+      }
+   }
+
+   private static void roomsAndRates(Connection conn) {
+      try {
+         Statement stmt = conn.createStatement();
+         ResultSet roomSet = stmt.executeQuery("select * from lab7_rooms");
+         ArrayList<Room> rooms = new ArrayList<Room>();
+
+         while (roomSet.next()) {
+            Room room = new Room();
+            room.setRoomCode(roomSet.getString("RoomCode"));
+            room.setRoomName(roomSet.getString("RoomName"));
+            room.setBeds(roomSet.getInt("Beds"));
+//            room.setBeds(Integer.parseInt((roomSet.getString("Beds"))));
+            room.setBedType(roomSet.getString("bedType"));
+            room.setMaxOcc(roomSet.getInt("maxOcc"));
+//            room.setMaxOcc(Integer.parseInt(roomSet.getString("maxOcc")));
+            room.setBasePrice(roomSet.getDouble("basePrice"));
+//            room.setBasePrice(Double.parseDouble(roomSet.getString("basePrice")));
+            room.setDecor(roomSet.getString("decor"));
+            rooms.add(room);
+//            System.out.format("%s %s %d %s %d %.2f %s\n", room.getRoomCode(), room.getRoomName(), room.getBeds(),
+//                    room.getBedType(), room.getMaxOcc(), room.getBasePrice(), room.getDecor());
+         }
+
+         ResultSet afterCurrent = stmt.executeQuery("select Room, CheckIn, Checkout, " +
+                 "sum(datediff(Checkout, CheckIn)) as \"Days Occupied\" from lab7_reservations " +
+                 "where Checkin > (date_sub(curdate(), interval 180 day)) group by Room;");
+         while (afterCurrent.next()) {
+            String roomCode = afterCurrent.getString("Room");
+            int daysOccupied = afterCurrent.getInt("Days Occupied");
+            for (Room room : rooms) {
+               if (room.getRoomCode().equals(roomCode)) {
+                  room.setPopularity((double)daysOccupied);
+               }
+            }
+         }
+
+         ResultSet duringCurrent = stmt.executeQuery("select Room, CheckIn, Checkout, " +
+                 "datediff(Checkout, date_sub(curdate(), interval 180 day)) as \"Days Occupied\" " +
+                 "from lab7_reservations where (date_sub(curdate(), interval 180 day) between CheckIn and Checkout);");
+         while (duringCurrent.next()) {
+            String roomCode = duringCurrent.getString("Room");
+            int daysOccupied = duringCurrent.getInt("Days Occupied");
+            for (Room room : rooms) {
+               if (room.getRoomCode().equals(roomCode)) {
+                  daysOccupied += room.getPopularity();
+                  room.setPopularity(daysOccupied / 180.0);
+                  System.out.println(room.getRoomCode() + ": " + room.getPopularity());
+               }
+            }
+         }
+
+
+
+         }
       catch (SQLException exception) {
          exception.printStackTrace();
       }
@@ -128,6 +194,21 @@ public class InnReservations {
       res.numAdults = scanner.nextInt();
       System.out.print("Number of Children: ");
       res.numChildren = scanner.nextInt();
+
+      boolean proceed = false;
+      while (proceed == false) {
+         System.out.print("Ready to proceed? (y/n) - (type n to cancel reservation): ");
+         char input = scanner.next().charAt(0);
+         if (input == 'n' || input == 'N') {
+            return null;
+         }
+         if (input == 'y' || input == 'Y') {
+            proceed = true;
+         }
+         else {
+            System.out.println("Invalid input.");
+         }
+      }
 
       return res;
    }

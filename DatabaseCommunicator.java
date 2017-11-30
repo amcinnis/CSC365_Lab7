@@ -62,12 +62,12 @@ public class DatabaseCommunicator {
       Connection currConn = DatabaseCommunicator.getCurrentConnection();
       PreparedStatement insert = null;
       String qMarks = "?";
-      
+
       if (fields.size() != values.size()) {
          System.out.println("Error: insertDatabase(): fields and values different sizes");
          return 1;
       }
-      
+
       
       for (int i = 1; i < fields.size(); i++) {
          qMarks += ", ?";
@@ -125,6 +125,7 @@ public class DatabaseCommunicator {
    }
    */	
 
+
    /*
    public static void deleteDatabase(String tableName, String value)
    {
@@ -158,11 +159,11 @@ public class DatabaseCommunicator {
    return Integer.parseInt(list.get(0).get("count(*)").toString()) == 1; 
    }
    */	
-   
+
    public static void roomPopScore(DatabaseObject object) {
       Connection currConn = DatabaseCommunicator.getCurrentConnection();
       PreparedStatement query = null;
-      
+
       try {
          query = currConn.prepareStatement("SELECT * FROM lab7_reservations WHERE DATEDIFF(Checkout, CURDATE()) <= 180");
       } (SQLException e) {
@@ -184,7 +185,7 @@ public class DatabaseCommunicator {
          }
       }
    }
-   
+
    private static void databaseActionDC(PreparedStatement insert) {
       try {
          int result = insert.executeUpdate();
