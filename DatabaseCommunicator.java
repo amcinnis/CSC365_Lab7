@@ -61,25 +61,22 @@ public class DatabaseCommunicator {
    public static int insertDatabase(DatabaseObject object, List<String> fields, List<String> values) {
       Connection currConn = DatabaseCommunicator.getCurrentConnection();
       PreparedStatement insert = null;
+      String qMarks = "?";
       
       if (fields.size() != values.size()) {
          System.out.println("Error: insertDatabase(): fields and values different sizes");
          return 1;
       }
       
-      String fieldString = fields.get(0);
-      String valueString = values.get(0);
       
       for (int i = 1; i < fields.size(); i++) {
-         fieldString += ", " + fields.get(i);
-         valueString += ", " + values.get(i);
+         qMarks += ", ?";
       }
       
-      System.out.println("Fields: " + fieldString);
-      System.out.println("Values: " + valueString);
-      
+      String baseStatement = "INSERT INTO " + object.getTable() + " (" + qMarks + ") VALUES (" + qMarks + ");";
+
       try {
-         insert = currConn.prepareStatement("INSERT INTO " + object.getTable() + " (?) VALUES (?);");
+         insert = currConn.prepareStatement(baseStatement);
          insert.setString(0, fieldString);
          insert.setString(1, valueString);
       } catch (SQLException e) {
@@ -128,7 +125,6 @@ public class DatabaseCommunicator {
    }
    */	
 
-
    /*
    public static void deleteDatabase(String tableName, String value)
    {
@@ -162,8 +158,34 @@ public class DatabaseCommunicator {
    return Integer.parseInt(list.get(0).get("count(*)").toString()) == 1; 
    }
    */	
+   
+   public static void roomPopScore(DatabaseObject object) {
+      Connection currConn = DatabaseCommunicator.getCurrentConnection();
+      PreparedStatement query = null;
+      
+      try {
+         query = currConn.prepareStatement("SELECT * FROM lab7_reservations WHERE DATEDIFF(Checkout, CURDATE()) <= 180");
+      } (SQLException e) {
+         e.printStackTrace();
+      }
+      databaseAction(query);
+   }
 
    private static void databaseAction(PreparedStatement insert) {
+      try {
+         int result = insert.executeUpdate();
+      } catch (SQLException e) {
+         e.printStackTrace();
+      } finally {
+         try {
+            insert.close();
+         } catch (SQLException e) {
+            e.printStackTrace();
+         }
+      }
+   }
+   
+   private static void databaseActionDC(PreparedStatement insert) {
       try {
          int result = insert.executeUpdate();
       } catch (SQLException e) {
