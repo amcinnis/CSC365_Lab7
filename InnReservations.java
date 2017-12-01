@@ -14,6 +14,8 @@ import java.util.List;
 import java.sql.ResultSet;
 import java.util.Scanner;
 
+import com.mysql.jdbc.ResultSetRow;
+
 
 public class InnReservations {
    /** 
@@ -83,6 +85,26 @@ public class InnReservations {
                   break;
                case 3:
                   chosen = true;
+                  System.out.println("Detailed Reservation Information System");
+                  System.out.println("Leave any field blank (press enter) you do not wish to search on.");
+                  System.out.println("Specify First Name: ");
+                  String firstName = scanner.nextLine();
+                  System.out.println("Specify Last Name: ");
+                  String lastName = scanner.nextLine();
+                  System.out.println("Specify Check In Date: ");
+                  Date checkin = Date.valueOf(scanner.nextLine());
+                  System.out.println("Specify Check Out Date: ");
+                  Date checkout = Date.valueOf(scanner.nextLine());
+                  System.out.println("Specify Room Code: ");
+                  String roomCode = scanner.nextLine();
+                  System.out.println("Specify Reservation Code: ");
+                  String resCode = scanner.nextLine();
+                  
+                  DatabaseCommunicator comm = new DatabaseCommunicator(jdbcUrl, dbUsername, dbPassword, dbname);
+                  
+                  ResultSet results = DatabaseCommunicator.resInfo(firstName, lastName, checkin, checkout, roomCode, resCode);
+                  
+                  System.out.println(results);
                   break;
                case 4:
                   chosen = true;
