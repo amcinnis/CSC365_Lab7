@@ -29,7 +29,7 @@ public class InnReservations {
          String dbPassword = System.getenv("APP_JDBC_PW");
          String dbname = System.getenv("APP_JDBC_DBNAME");
 
-         DatabaseCommunicator comm = new DatabaseCommunicator(jdbcUrl, dbUsername, dbPassword, dbname);
+         /*DatabaseCommunicator comm = new DatabaseCommunicator(jdbcUrl, dbUsername, dbPassword, dbname);
 
          List<String> fields = new ArrayList<String>();
          List<String> values = new ArrayList<String>();
@@ -43,7 +43,7 @@ public class InnReservations {
          
          DatabaseObject dbObj = newRoom;
          
-         comm.insertDatabase(dbObj, fields, values);
+         comm.insertDatabase(dbObj, fields, values);*/
 
 	/* -------------------------- */
 
@@ -135,12 +135,13 @@ public class InnReservations {
 //                    room.getBedType(), room.getMaxOcc(), room.getBasePrice(), room.getDecor());
          }
 
-         ResultSet afterCurrent = stmt.executeQuery("select Room, CheckIn, Checkout, " +
-                 "sum(datediff(Checkout, CheckIn)) as \"Days Occupied\" from lab7_reservations " +
-                 "where Checkin > (date_sub(curdate(), interval 180 day)) group by Room;");
-         while (afterCurrent.next()) {
-            String roomCode = afterCurrent.getString("Room");
-            int daysOccupied = afterCurrent.getInt("Days Occupied");
+         System.out.println("Popularity Score");
+         ResultSet left = stmt.executeQuery("select Room, CheckIn, Checkout, datediff(Checkout, date_sub(curdate(), " +
+                 "interval 180 day)) as \"Days Occupied\" from lab7_reservations where " +
+                 "(date_sub(curdate(), interval 180 day) between CheckIn and Checkout);");
+         while (left.next()) {
+            String roomCode = left.getString("Room");
+            int daysOccupied = left.getInt("Days Occupied");
             for (Room room : rooms) {
                if (room.getRoomCode().equals(roomCode)) {
                   room.setPopularity((double)daysOccupied);
@@ -148,22 +149,45 @@ public class InnReservations {
             }
          }
 
-         ResultSet duringCurrent = stmt.executeQuery("select Room, CheckIn, Checkout, " +
-                 "datediff(Checkout, date_sub(curdate(), interval 180 day)) as \"Days Occupied\" " +
-                 "from lab7_reservations where (date_sub(curdate(), interval 180 day) between CheckIn and Checkout);");
-         while (duringCurrent.next()) {
-            String roomCode = duringCurrent.getString("Room");
-            int daysOccupied = duringCurrent.getInt("Days Occupied");
+         ResultSet middle = stmt.executeQuery("select Room, CheckIn, Checkout, sum(datediff(Checkout, CheckIn)) " +
+                 "as \"Days Occupied\" from lab7_reservations where " +
+                 "(Checkin > (date_sub(curdate(), interval 180 day))) and (Checkout < curdate()) group by Room;");
+         while (middle.next()) {
+            String roomCode = middle.getString("Room");
+            int daysOccupied = middle.getInt("Days Occupied");
             for (Room room : rooms) {
                if (room.getRoomCode().equals(roomCode)) {
                   daysOccupied += room.getPopularity();
-                  room.setPopularity(daysOccupied / 180.0);
+                  room.setPopularity((double)daysOccupied);
+//                  System.out.println(room.getRoomCode() + ": " + room.getPopularity());
+               }
+            }
+         }
+
+         ResultSet right = stmt.executeQuery("select Room, CheckIn, Checkout, datediff(curdate(), CheckIn) as " +
+                 "\"Days Occupied\" from lab7_reservations where curdate() between CheckIn and Checkout;");
+         while (right.next()) {
+            String roomCode = right.getString("Room");
+            int daysOccupied = right.getInt("Days Occupied");
+            for (Room room : rooms) {
+               if (room.getRoomCode().equals(roomCode)) {
+                  daysOccupied += room.getPopularity();
+                  room.setPopularity((double)daysOccupied / 180.0);
                   System.out.println(room.getRoomCode() + ": " + room.getPopularity());
                }
             }
          }
 
-
+         System.out.println("\nMost recent checkout and length of stay:");
+         ResultSet recentStay = stmt.executeQuery("select Room, max(CheckIn) as CheckIn, max(Checkout) as Checkout, " +
+                 "datediff(max(Checkout), max(CheckIn)) as NumDays from lab7_reservations " +
+                 "where Checkout <= curdate() group by Room;");
+         while (recentStay.next()) {
+            String roomCode = recentStay.getString("Room");
+            String checkOut = recentStay.getString("Checkout");
+            int numDays = recentStay.getInt("NumDays");
+            System.out.format("%s: %s %d\n", roomCode, checkOut, numDays);
+         }
 
          }
       catch (SQLException exception) {
