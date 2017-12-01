@@ -67,6 +67,7 @@ public class InnReservations {
 
             Scanner scanner = new Scanner(System.in);
             int input = scanner.nextInt();
+            scanner.nextLine();
             System.out.println();
 
             switch (input) {
@@ -102,12 +103,15 @@ public class InnReservations {
                   
                   DatabaseCommunicator comm = new DatabaseCommunicator(jdbcUrl, dbUsername, dbPassword, dbname);
                   
-                  ResultSet results = DatabaseCommunicator.resInfo(firstName, lastName, checkin, checkout, roomCode, resCode);
+                  ResultSet driResults = DatabaseCommunicator.resInfo(firstName, lastName, checkin, checkout, roomCode, resCode);
                   
-                  System.out.println(results);
+                  System.out.println(driResults);
                   break;
                case 4:
                   chosen = true;
+                  System.out.println("Enter a year: ");
+                  int year = scanner.nextInt();
+                  DatabaseCommunicator.yearlyRevenue(year);
                   break;
                default:
                   System.out.println("Invalid input - please try again" + '\n');

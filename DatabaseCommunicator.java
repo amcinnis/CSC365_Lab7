@@ -129,6 +129,7 @@ public class DatabaseCommunicator {
       if (checkout != null) {
          stmt += " AND Checkout = ?";
       }
+      stmt += ";";
       
       try {
          query = currConn.prepareStatement(stmt);
@@ -162,6 +163,27 @@ public class DatabaseCommunicator {
          e.printStackTrace();
       }
       return databaseQuery(query);
+   }
+   
+   public static void yearlyRevenue(int year) {
+      Connection currConn = DatabaseCommunicator.getCurrentConnection();
+      PreparedStatement monthQuery = null;
+      PreparedStatement yearQuery = null;
+      
+      String monthlyRevStmt = "SELECT Room, CheckIn, Checkout, SUM(Rate * datediff(Checkout, CheckIn)) AS 'Monthly Revenue', monthname(Checkout) AS 'Month'" + 
+            "FROM lab7_reservations WHERE YEAR(Checkout) = ? GROUP BY Room, MONTH(Checkout);";
+      String yearlyRevStmt = "SELECT Room, SUM(Revenue) AS 'Yearly Revenue' FROM " + monthlyRevStmt.substring(0, monthlyRevStmt.length() - 1) + " GROUP BY Room;";
+      
+      try {
+         monthQuery = currConn.prepareStatement(monthlyRevStmt);
+         monthQuery.setInt(1, year);
+         yearQuery = currConn.prepareStatement(yearlyRevStmt);
+         yearQuery.setInt(1, year);
+      } catch (SQLException e) {
+         e.printStackTrace();
+      }
+      System.out.println(databaseQuery(monthQuery));
+      System.out.println(databaseQuery(yearQuery));
    }
    
    private static ResultSet databaseQuery(PreparedStatement pstmt) {
