@@ -134,7 +134,8 @@ public class InnReservations {
                   chosen = true;
                   System.out.println("Enter a year: ");
                   int year = scanner.nextInt();
-                  DatabaseCommunicator.yearlyRevenue(year);
+                  InnReservations.revenue(conn, year);
+                  chosen = false;
                   break;
                case 5:
                   chosen = true;
@@ -324,6 +325,53 @@ public class InnReservations {
 
       return res;
    }
+
+   private static void revenue(Connection conn, int year) {
+      try {
+         Statement stmt = conn.createStatement();
+         ResultSet revSet = stmt.executeQuery("select Room, " +
+                 "sum(case when Month = 1 then Revenue else 0 end) as \"January\", " +
+                 "sum(case when Month = 2 then Revenue else 0 end) as \"February\", " +
+                 "sum(case when Month = 3 then Revenue else 0 end) as \"March\", " +
+                 "sum(case when Month = 4 then Revenue else 0 end) as \"April\", " +
+                 "sum(case when Month = 5 then Revenue else 0 end) as \"May\", " +
+                 "sum(case when Month = 6 then Revenue else 0 end) as \"June\", " +
+                 "sum(case when Month = 7 then Revenue else 0 end) as \"July\", " +
+                 "sum(case when Month = 8 then Revenue else 0 end) as \"August\", " +
+                 "sum(case when Month = 9 then Revenue else 0 end) as \"September\", " +
+                 "sum(case when Month = 10 then Revenue else 0 end) as \"October\", " +
+                 "sum(case when Month = 11 then Revenue else 0 end) as \"November\", " +
+                 "sum(case when Month = 12 then Revenue else 0 end) as \"December\", " +
+                 "sum(a.Revenue) as \"Total\" " +
+                 "from (select Room, sum(Rate * datediff(Checkout, CheckIn)) as Revenue, month(Checkout) as `Month` " +
+                 "from lab7_reservations where year(Checkout) = " + year + " group by month(Checkout), Room" +
+                 ")as a group by Room;");
+         System.out.println("Room, January, February, March, April, May, June, July, August, September, October, November, December");
+         while (revSet.next()) {
+            String roomCode = revSet.getString("Room");
+            double january = revSet.getDouble("January");
+            double february = revSet.getDouble("February");
+            double march = revSet.getDouble("March");
+            double april = revSet.getDouble("April");
+            double may = revSet.getDouble("May");
+            double june = revSet.getDouble("June");
+            double july = revSet.getDouble("July");
+            double august = revSet.getDouble("August");
+            double september = revSet.getDouble("September");
+            double october = revSet.getDouble("October");
+            double november = revSet.getDouble("November");
+            double december = revSet.getDouble("December");
+            System.out.format("%s %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f\n", roomCode, january, february, march, april, may,
+                    june, july, august, september, october, november, december);
+
+
+         }
+         System.out.println();
+      }
+      catch (SQLException exception) {
+         exception.printStackTrace();
+      }
+   }
 }
 
 class sortByPopularity implements Comparator<Room> {
@@ -339,3 +387,4 @@ class sortByPopularity implements Comparator<Room> {
       }
    }
 }
+
