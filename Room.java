@@ -1,3 +1,5 @@
+import java.sql.Date;
+
 public class Room implements DatabaseObject {
 
    private String roomCode;
@@ -8,8 +10,12 @@ public class Room implements DatabaseObject {
    private double basePrice;
    private String decor;
    private double popularity;
+   private java.sql.Date nextDate;
+   private java.sql.Date recentCheckout;
+   private int numDays;
    
-   public Room(String roomCode, String roomName, int beds, String bedType, int maxOcc, double basePrice, String decor, double popularity) {
+   public Room(String roomCode, String roomName, int beds, String bedType, int maxOcc, double basePrice, String decor,
+               double popularity, java.sql.Date nextDate, java.sql.Date recentCheckout, int numDays) {
       super();
       this.roomCode = roomCode;
       this.roomName = roomName;
@@ -19,6 +25,9 @@ public class Room implements DatabaseObject {
       this.basePrice = basePrice;
       this.decor = decor;
       this.popularity = popularity;
+      this.nextDate = nextDate;
+      this.recentCheckout = recentCheckout;
+      this.numDays = numDays;
    }
    
    public Room() {
@@ -86,6 +95,30 @@ public class Room implements DatabaseObject {
 
    public void setPopularity(double popularity) {
       this.popularity = popularity;
+   }
+
+   public java.sql.Date getNextDate() {
+      return nextDate;
+   }
+
+   public void setNextDate(java.sql.Date nextDate) {
+      this.nextDate = nextDate;
+   }
+
+   public java.sql.Date getRecentCheckout() {
+      return recentCheckout;
+   }
+
+   public void setRecentCheckout(java.sql.Date recentCheckout) {
+      this.recentCheckout = recentCheckout;
+   }
+
+   public int getNumDays() {
+      return numDays;
+   }
+
+   public void setNumDays(int numDays) {
+      this.numDays = numDays;
    }
 
    public String getKeys(){

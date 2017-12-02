@@ -13,6 +13,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.sql.ResultSet;
 import java.util.Scanner;
+import java.util.Comparator;
+import java.util.Collections;
 
 import com.mysql.jdbc.ResultSetRow;
 
@@ -62,6 +64,7 @@ public class InnReservations {
             System.out.println("2. Reservations");
             System.out.println("3. Detailed Reservation Information");
             System.out.println("4. Revenue");
+            System.out.println("5. (Exit)");
             System.out.println();
             System.out.print("Select a number: ");
 
@@ -74,6 +77,7 @@ public class InnReservations {
                case 1:
                   chosen = true;
                   InnReservations.roomsAndRates(conn);
+                  chosen = false;
                   break;
                case 2:
                   chosen = true;
@@ -132,6 +136,10 @@ public class InnReservations {
                   int year = scanner.nextInt();
                   DatabaseCommunicator.yearlyRevenue(year);
                   break;
+               case 5:
+                  chosen = true;
+                  System.out.println("Goodbye!");
+                  break;
                default:
                   System.out.println("Invalid input - please try again" + '\n');
                   chosen = false;
@@ -180,7 +188,7 @@ public class InnReservations {
 //                    room.getBedType(), room.getMaxOcc(), room.getBasePrice(), room.getDecor());
          }
 
-         System.out.println("Popularity Score");
+//         System.out.println("Popularity Score");
          ResultSet left = stmt.executeQuery("select Room, CheckIn, Checkout, datediff(Checkout, date_sub(curdate(), " +
                  "interval 180 day)) as \"Days Occupied\" from lab7_reservations where " +
                  "(date_sub(curdate(), interval 180 day) between CheckIn and Checkout);");
@@ -217,24 +225,59 @@ public class InnReservations {
             for (Room room : rooms) {
                if (room.getRoomCode().equals(roomCode)) {
                   daysOccupied += room.getPopularity();
-                  room.setPopularity((double)daysOccupied / 180.0);
-                  System.out.println(room.getRoomCode() + ": " + room.getPopularity());
+                  room.setPopularity((double)daysOccupied);
                }
             }
          }
 
-         System.out.println("\nMost recent checkout and length of stay:");
+         for (Room room : rooms) {
+            double pop = room.getPopularity();
+            room.setPopularity(pop / 180.0);
+//            System.out.println(room.getRoomCode() + ": " + room.getPopularity());
+         }
+
+//         System.out.println("\nMost recent checkout and length of stay:");
          ResultSet recentStay = stmt.executeQuery("select Room, max(CheckIn) as CheckIn, max(Checkout) as Checkout, " +
                  "datediff(max(Checkout), max(CheckIn)) as NumDays from lab7_reservations " +
                  "where Checkout <= curdate() group by Room;");
          while (recentStay.next()) {
             String roomCode = recentStay.getString("Room");
-            String checkOut = recentStay.getString("Checkout");
+            java.sql.Date checkOut = recentStay.getDate("Checkout");
             int numDays = recentStay.getInt("NumDays");
-            System.out.format("%s: %s %d\n", roomCode, checkOut, numDays);
+//            System.out.format("%s: %s %d\n", roomCode, checkOut, numDays);
+            for (Room room : rooms) {
+               if (room.getRoomCode().equals(roomCode)) {
+                  room.setRecentCheckout(checkOut);
+                  room.setNumDays(numDays);
+               }
+            }
          }
 
+//         System.out.println("\nNext available date:");
+         ResultSet nextSet = stmt.executeQuery("select cout.Room, min(cout.Checkout) as 'nextDate' from lab7_reservations as cout where cout.Checkout >= curdate() and cout.Checkout not in (select cin.CheckIn from lab7_reservations as cin where cin.CheckIn >= curdate() and cin.Room = cout.Room order by cin.CheckIn) group by cout.Room order by cout.Checkout;");
+         while (nextSet.next()) {
+            String roomCode = nextSet.getString("Room");
+            java.sql.Date nextDate = nextSet.getDate("nextDate");
+            for (Room room : rooms) {
+               if (room.getRoomCode().equals(roomCode)) {
+                  room.setNextDate(nextDate);
+//                  System.out.format("%s: %s\n", room.getRoomCode(), room.getNextDate());
+               }
+            }
          }
+
+         Collections.sort(rooms, new sortByPopularity());
+
+         System.out.format("%s, %s, %s, %s, %s, %s, %s, %s, %s, %s\n", "RoomCode", "RoomName", "Beds", "bedType", "maxOcc",
+                 "basePrice", "decor", "PopularityScore", "Next Available Date", "Most Recent Stay Length\n");
+         for (Room room : rooms) {
+            System.out.format("%s %s %d %s %d %.2f %s %.2f %s %d\n", room.getRoomCode(), room.getRoomName(),
+                    room.getBeds(), room.getBedType(), room.getMaxOcc(), room.getBasePrice(), room.getDecor(),
+                    room.getPopularity(), room.getNextDate(), room.getNumDays());
+         }
+         System.out.println();
+
+      }
       catch (SQLException exception) {
          exception.printStackTrace();
       }
@@ -280,5 +323,19 @@ public class InnReservations {
       }
 
       return res;
+   }
+}
+
+class sortByPopularity implements Comparator<Room> {
+   public int compare(Room a, Room b) {
+      if (a.getPopularity() < b.getPopularity()) {
+         return 1;
+      }
+      else if (a.getPopularity() > b.getPopularity()) {
+         return -1;
+      }
+      else {
+         return 0;
+      }
    }
 }
