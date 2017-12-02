@@ -34,7 +34,7 @@ public class DatabaseCommunicator {
    private static void connect() {
       try {
          Class.forName("com.mysql.jdbc.Driver");
-         connection = (Connection) DriverManager.getConnection(url + dbName, username, password);
+         connection = (Connection) DriverManager.getConnection(url, username, password);
       } catch (SQLException | ClassNotFoundException e) {
          e.printStackTrace();
       }
@@ -120,9 +120,9 @@ public class DatabaseCommunicator {
       
       String stmt = "SELECT CODE, RoomCode, CheckIn, Checkout, Rate, LastName, FirstName, Adults, Kids, RoomName, Beds, bedType, maxOcc, decor " +
                      "FROM lab7_reservations " +
-                     "JOIN lab7_rooms ON Room = RoomCode" +
+                     "JOIN lab7_rooms ON Room = RoomCode " +
                      "WHERE FirstName LIKE ? AND LastName LIKE ? AND " +
-                     "Room LIKE ? AND CODE LIKE ?";
+                     "RoomCode LIKE ? AND CODE LIKE ?";
       if (checkin != null) {
          stmt += " AND CheckIn = ?";
       }
@@ -130,25 +130,25 @@ public class DatabaseCommunicator {
          stmt += " AND Checkout = ?";
       }
       stmt += ";";
-      
+ 
       try {
          query = currConn.prepareStatement(stmt);
-         if (firstName == null || firstName == "") {
+         if (firstName == null || firstName.equals("")) {
             query.setString(1, "%");
          } else {
             query.setString(1, firstName);
          }
-         if (lastName == null || lastName == "") {
+         if (lastName == null || lastName.equals("")) {
             query.setString(2, "%");
          } else {
             query.setString(2, lastName);
          }
-         if (roomCode == null || roomCode == "") {
+         if (roomCode == null || roomCode.equals("")) {
             query.setString(3, "%");
          } else {
             query.setString(3, roomCode);
          }
-         if (resCode == null || resCode == "") {
+         if (resCode == null || resCode.equals("")) {
             query.setString(4, "%");
          } else {
             query.setString(4, resCode);
@@ -157,7 +157,11 @@ public class DatabaseCommunicator {
             query.setDate(5, checkin);
          }
          if (checkout != null) {
-            query.setDate(6, checkout);
+            if (checkin != null) {
+               query.setDate(5, checkout);
+            } else {
+               query.setDate(6, checkout);
+            }
          }
       } catch (SQLException e) {
          e.printStackTrace();
@@ -193,11 +197,10 @@ public class DatabaseCommunicator {
       } catch (SQLException e) {
          e.printStackTrace();
       } finally {
-         try {
-            pstmt.close();
-         } catch (SQLException e) {
-            e.printStackTrace();
-         }
+//         try {
+//         } catch (SQLException e) {
+//            e.printStackTrace();
+//         }
       }
       return results;
    }

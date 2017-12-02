@@ -89,23 +89,42 @@ public class InnReservations {
                   System.out.println("Detailed Reservation Information System");
                   System.out.println("Leave any field blank (press enter) you do not wish to search on.");
                   System.out.println("Specify First Name: ");
-                  String firstName = scanner.nextLine();
+                  String firstName = scanner.nextLine().trim();
                   System.out.println("Specify Last Name: ");
-                  String lastName = scanner.nextLine();
-                  System.out.println("Specify Check In Date: ");
-                  Date checkin = Date.valueOf(scanner.nextLine());
-                  System.out.println("Specify Check Out Date: ");
-                  Date checkout = Date.valueOf(scanner.nextLine());
+                  String lastName = scanner.nextLine().trim();
+                  System.out.println("Specify Check In Date (YYYY-MM-DD): ");
+                  Date checkin = null;
+                  try { 
+                     checkin = Date.valueOf(scanner.nextLine());
+                 } catch (IllegalArgumentException e) {
+                     System.out.println("Invalid date entered.");
+                 }
+                           System.out.println("Specify Check Out Date (YYYY-MM-DD): ");
+                 Date checkout = null;
+                 try { 
+                     checkout = Date.valueOf(scanner.nextLine());
+                 } catch (IllegalArgumentException e) {
+                     System.out.println("Invalid date entered.");
+                 }
                   System.out.println("Specify Room Code: ");
-                  String roomCode = scanner.nextLine();
+                  String roomCode = scanner.nextLine().trim();
                   System.out.println("Specify Reservation Code: ");
-                  String resCode = scanner.nextLine();
+                  String resCode = scanner.nextLine().trim();
                   
                   DatabaseCommunicator comm = new DatabaseCommunicator(jdbcUrl, dbUsername, dbPassword, dbname);
                   
                   ResultSet driResults = DatabaseCommunicator.resInfo(firstName, lastName, checkin, checkout, roomCode, resCode);
                   
-                  System.out.println(driResults);
+                  ResultSetMetaData driMetaData = driResults.getMetaData();
+                  int columnsNumber = driMetaData.getColumnCount();
+                  while (driResults.next()) {
+                      for (int i = 1; i <= columnsNumber; i++) {
+                          if (i > 1) System.out.print(",  ");
+                          String columnValue = driResults.getString(i);
+                          System.out.print(driMetaData.getColumnName(i) + " " + columnValue);
+                      }
+                      System.out.println();
+                  }
                   break;
                case 4:
                   chosen = true;
