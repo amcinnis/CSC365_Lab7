@@ -190,6 +190,92 @@ public class DatabaseCommunicator {
       System.out.println(databaseQuery(yearQuery));
    }
    
+   //helper function for similar results
+//   private ResultSet similarDates(int range) {
+//      
+//   }
+   
+   public static ResultSet makeRes(String firstName, String lastName, String roomCode, String bedType, int adults, int children, Date checkin, Date checkout) {
+      Connection currConn = DatabaseCommunicator.getCurrentConnection();
+      PreparedStatement query = null;
+      ResultSet topFive = null;
+      
+      String stmt = "SELECT * FROM lab7_rooms WHERE RoomCode NOT IN (" +
+            "SELECT RoomCode, CheckIn, Checkout, bedType, maxOcc " +
+            "FROM lab7_reservations " +
+            "JOIN lab7_rooms ON Room = RoomCode " +
+            "WHERE RoomCode LIKE ? AND bedType LIKE ? " +
+            "AND maxOcc >= ? AND (CheckIn BETWEEN ? AND DATE_SUB(?, INTERVAL 1 DAY) " + 
+            "OR (Checkout BETWEEN DATE_ADD(?, INTERVAL 1 DAY) AND ?)) " +
+            "LIMIT 5";
+      
+      stmt += ";";
+      
+      try {
+         query = currConn.prepareStatement(stmt);
+         if (roomCode == null || roomCode.equals("")) {
+            query.setString(1, "%");
+         } else {
+            query.setString(1, roomCode);
+         }
+         if (bedType == null || bedType.equals("")) {
+            query.setString(2, "%");
+         } else {
+            query.setString(2, lastName);
+         }
+         query.setInt(3, adults + children);
+         query.setDate(4, checkin);
+         query.setDate(5, checkout);
+         query.setDate(6, checkin);
+         query.setDate(7, checkout);
+         
+         topFive = databaseQuery(query);
+         
+         int i = 0;
+         while (topFive.next()) {
+            i++;
+         }
+         while (i < 5) {
+            i = 0;
+            //query again with additional rooms based on desired room
+            //if it exists, otherwise move directly to expanded the date range
+            String stmt2 = "SELECT * FROM lab7_rooms WHERE RoomCode NOT IN (" +
+                  "SELECT RoomCode, CheckIn, Checkout, bedType, maxOcc, decor " +
+                  "FROM lab7_reservations " +
+                  "JOIN lab7_rooms ON Room = RoomCode " +
+                  "WHERE decor = (SELECT decor from lab7_rooms WHERE RoomCode = ?) " + 
+                  "OR bedType = (SELECT bedType from lab7_rooms WHERE RoomCode = ?) " +
+                  "AND maxOcc >= ? AND (CheckIn BETWEEN ? AND DATE_SUB(?, INTERVAL 1 DAY) " + 
+                  "OR (Checkout BETWEEN DATE_ADD(?, INTERVAL 1 DAY) AND ?)) " +
+                  "LIMIT 5";
+            
+            query = currConn.prepareStatement(stmt2);
+            if (roomCode == null || roomCode.equals("")) {
+               query.setString(1, "%");
+            } else {
+               query.setString(1, roomCode);
+            }
+            if (bedType == null || bedType.equals("")) {
+               query.setString(2, "%");
+            } else {
+               query.setString(2, lastName);
+            }
+            query.setInt(3, adults + children);
+            query.setDate(4, checkin);
+            query.setDate(5, checkout);
+            
+            topFive = databaseQuery(query);
+            while (topFive.next()) {
+               i++;
+            }
+         }
+      } catch(SQLException e) {
+         e.printStackTrace();
+      }
+      
+      return topFive;
+   }
+   
    private static ResultSet databaseQuery(PreparedStatement pstmt) {
       ResultSet results = null;
       try {

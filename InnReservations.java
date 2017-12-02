@@ -129,7 +129,11 @@ public class InnReservations {
                       }
                       System.out.println();
                   }
-                  break;
+                  System.out.println("Return to menu? (y/n)");
+                  if (scanner.nextLine().equalsIgnoreCase("y")) {
+                     chosen = false;
+                  }
+		  break;
                case 4:
                   chosen = true;
                   System.out.println("Enter a year: ");
